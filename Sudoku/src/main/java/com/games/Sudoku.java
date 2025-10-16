@@ -52,7 +52,7 @@ public class Sudoku {
     int errors = 0;
 
     Sudoku() {
-        frame.setVisible(true);
+        //frame.setVisible(true);
         frame.setSize(boardwidth, boardHeight);
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -82,9 +82,52 @@ public class Sudoku {
             for (int c = 0; c < 9; c++) {
                 Tile tile = new Tile(r,c);
                 char tileChar = puzzle[r].charAt(c);
-                tile.setText(String.valueOf(tileChar));
+                if (tileChar != '-') {
+                    tile.setFont(new Font("Arial", Font.BOLD, 20));
+                    tile.setText(String.valueOf(tileChar));
+                    tile.setBackground(Color.lightGray);
+                }
+                else {
+                    tile.setFont(new Font("Arial", Font.PLAIN, 20));
+                    tile.setBackground(Color.white);
+                }
+                if ((r == 2 && c == 2) || (r == 2 && c == 5) || (r == 5 && c == 2) || (r == 5 && c == 5)) {
+                    tile.setBorder(BorderFactory.createMatteBorder(1, 1, 5, 5, Color.black));
+                }
+                else if (r == 2 || r == 5) {
+                    tile.setBorder(BorderFactory.createMatteBorder(1, 1, 5, 1, Color.black));
+                }
+                else if (c == 2 || c == 5) {
+                    tile.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 5, Color.black));
+                }
+                else {
+                    tile.setBorder(BorderFactory.createLineBorder(Color.black));
+                }
                 tile.setFocusable(false);
                 boardPanel.add(tile);
+
+                tile.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        Tile tile = (Tile) e.getSource();
+                        int r = tile.r;
+                        int c = tile.c;
+                        if (numSelected != null) {
+                            if (tile.getText() != "") {
+                                return;
+                            }
+                            String numSelectedText = numSelected.getText();
+                            String tileSolution = String.valueOf(solution[r].charAt(c));
+                            if (tileSolution.equals(numSelectedText)) {
+                                tile.setText(numSelectedText);
+                            }
+                            else {
+                                errors += 1;
+                                textLabel.setText("Sudoku: " + String.valueOf(errors));
+                            }
+
+                        }
+                    }
+                });
             }
         }
     }
@@ -111,3 +154,8 @@ public class Sudoku {
         }
     }
 }
+
+//Check to finish the game -- count how many puzzles are in the game everytime you get correct
+// set different puzlles at random
+// set easy medium and add
+// set rest and solve button
