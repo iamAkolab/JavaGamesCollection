@@ -159,3 +159,12 @@ public class Sudoku {
 // set different puzlles at random
 // set easy medium and add
 // set rest and solve button
+
+/*
+Homework:
+
+You can continue working on this project if you like. You can implement the missing click handler for the squareroot
+button. In addition you can expand the number of buttons to include scientific calculations with sin, cos, tan, log,
+etc. You can also add a delete button to remove a digit at a time as opposed to clear all, and other functions such
+as absolute value, power, remainder, etc.
+ */
