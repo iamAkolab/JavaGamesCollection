@@ -1,4 +1,4 @@
-package com.games
+package com.games;
 
 public class Main {
     public static void main(String[] args) {
