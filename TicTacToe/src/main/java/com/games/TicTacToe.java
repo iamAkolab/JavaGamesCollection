@@ -7,7 +7,7 @@ import javax.swing.*;
 
 public class TicTacToe {
     int boardWidth = 600;
-    int boardHeight = 650; // 50 px for the text panel on top
+    int boardHeight = 700; // 50 px for the text panel on top, 50 px for rest button
 
     JFrame frame = new JFrame("Tic-Tac-Toe");
     JLabel textLabel = new JLabel();
@@ -21,6 +21,8 @@ public class TicTacToe {
 
     boolean gameOver = false;
     int turns = 0;
+
+    private JButton resetButton;
 
     TicTacToe() {
         frame.setVisible(true);
@@ -43,7 +45,11 @@ public class TicTacToe {
 
         boardPanel.setLayout(new GridLayout(3, 3));
         boardPanel.setBackground(Color.DARK_GRAY);
-        frame.add(boardPanel);
+        frame.add(boardPanel,BorderLayout.CENTER);
+
+        resetButton = new JButton("Reset Game");
+        resetButton.addActionListener(e -> resetGame());
+        frame.add(resetButton, BorderLayout.SOUTH);
 
         for (int r = 0; r < 3; r++) {
             for (int c = 0; c < 3; c++) {
@@ -73,6 +79,16 @@ public class TicTacToe {
 
                     }
                 });
+            }
+        }
+    }
+
+    private void resetGame() {
+        currentPlayer = "X";
+        gameOver = false;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                board[i][j].setText("");
             }
         }
     }
