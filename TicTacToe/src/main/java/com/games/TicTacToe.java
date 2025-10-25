@@ -2,10 +2,11 @@ package com.games;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 
 public class TicTacToe {
-    int boardwidth = 600;
+    int boardWidth = 600;
     int boardHeight = 650; // 50 px for the text panel on top
 
     JFrame frame = new JFrame("Tic-Tac-Toe");
@@ -23,7 +24,7 @@ public class TicTacToe {
 
     TicTacToe() {
         frame.setVisible(true);
-        frame.setSize(boardwidth, boardHeight);
+        frame.setSize(boardWidth, boardHeight);
         frame.setLocationRelativeTo(null);
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -60,12 +61,12 @@ public class TicTacToe {
                     public void actionPerformed(ActionEvent e) {
                         if (gameOver) return;
                         JButton tile = (JButton) e.getSource();
-                        if (tile.getText() == "") {
+                        if (Objects.equals(tile.getText(), "")) {
                             tile.setText(currentPlayer);
                             turns++;
                             checkWinner();
                             if (!gameOver) {
-                                currentPlayer = currentPlayer == playerX ? playerO : playerX;
+                                currentPlayer = Objects.equals(currentPlayer, playerX) ? playerO : playerX;
                                 textLabel.setText(currentPlayer + "'s turn.");
                             }
                         }
@@ -79,10 +80,10 @@ public class TicTacToe {
     void checkWinner() {
         //horizontal
         for (int r = 0; r < 3; r++) {
-            if (board[r][0].getText() == "") continue;
+            if (Objects.equals(board[r][0].getText(), "")) continue;
 
-            if (board[r][0].getText() == board[r][1].getText() &&
-                    board[r][1].getText() == board[r][2].getText()) {
+            if (board[r][0].getText().equals(board[r][1].getText()) &&
+                    Objects.equals(board[r][1].getText(), board[r][2].getText())) {
                 for (int i = 0; i < 3; i++) {
                     setWinner(board[r][i]);
                 }
@@ -93,10 +94,10 @@ public class TicTacToe {
 
         //vertical
         for (int c = 0; c < 3; c++) {
-            if (board[0][c].getText() == "") continue;
+            if (Objects.equals(board[0][c].getText(), "")) continue;
 
-            if (board[0][c].getText() == board[1][c].getText() &&
-                    board[1][c].getText() == board[2][c].getText()) {
+            if (Objects.equals(board[0][c].getText(), board[1][c].getText()) &&
+                    Objects.equals(board[1][c].getText(), board[2][c].getText())) {
                 for (int i = 0; i < 3; i++) {
                     setWinner(board[i][c]);
                 }
@@ -106,9 +107,9 @@ public class TicTacToe {
         }
 
         //diagonally
-        if (board[0][0].getText() == board[1][1].getText() &&
-                board[1][1].getText() == board[2][2].getText() &&
-                board[0][0].getText() != "") {
+        if (Objects.equals(board[0][0].getText(), board[1][1].getText()) &&
+                Objects.equals(board[1][1].getText(), board[2][2].getText()) &&
+                !Objects.equals(board[0][0].getText(), "")) {
             for (int i = 0; i < 3; i++) {
                 setWinner(board[i][i]);
             }
@@ -117,9 +118,9 @@ public class TicTacToe {
         }
 
         //anti-diagonally
-        if (board[0][2].getText() == board[1][1].getText() &&
-                board[1][1].getText() == board[2][0].getText() &&
-                board[0][2].getText() != "") {
+        if (Objects.equals(board[0][2].getText(), board[1][1].getText()) &&
+                Objects.equals(board[1][1].getText(), board[2][0].getText()) &&
+                !Objects.equals(board[0][2].getText(), "")) {
             setWinner(board[0][2]);
             setWinner(board[1][1]);
             setWinner(board[2][0]);
