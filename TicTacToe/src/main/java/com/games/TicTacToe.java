@@ -9,6 +9,7 @@ import javax.swing.*;
 
 import static com.games.Main.showModeSelector;
 
+
 public class TicTacToe {
     int boardWidth = 600;
     int boardHeight = 700; // 50 px for the text panel on top, 50 px for rest button
