@@ -1,5 +1,4 @@
 package com.games;
-
 import javax.swing.*;
 
 public class Main {
