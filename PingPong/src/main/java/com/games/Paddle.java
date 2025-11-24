@@ -16,6 +16,7 @@ public class Paddle {
     private boolean left;
 
     public Paddle(Color c, boolean left) {
+
         color = c;
         this.left = left;
         if (this.left) {
@@ -57,6 +58,7 @@ public class Paddle {
     }
 
     public void update(Ball ball) {
+
         // paddle movement
         if(y > Main.HEIGHT - height) { y = Main.HEIGHT - height; }
         else if(y <0) { y = 0; }
