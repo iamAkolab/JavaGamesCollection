@@ -79,4 +79,12 @@ public class PacMan extends JPanel {
         pacManRightImage = new ImageIcon(getClass().getResource("./src/main/java/resources/images/pacmanRight.png")).getImage();
     }
 
+
+    public void keyTyped(KeyEvent e) {}
+
+    public void keyPressed(KeyEvent e) {}
+
+    public void keyReleased(KeyEvent e) {
+    }
+
 }
