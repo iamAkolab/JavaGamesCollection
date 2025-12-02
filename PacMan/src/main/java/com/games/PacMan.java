@@ -54,6 +54,11 @@ public class PacMan extends JPanel {
             "XXXXXXXXXXXXXXXXXXX"
     };
 
+    HashSet<Block> walls;
+    HashSet<Block> foods;
+    HashSet<Block> ghosts;
+    Block pacman;
+
 
 
     PacMan() {
