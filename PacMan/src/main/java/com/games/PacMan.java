@@ -1,13 +1,16 @@
 package com.games;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Random;
-import javax.swing.*;
 
 public class PacMan extends JPanel implements ActionListener, KeyListener {
 
+    // ===== ENUMS =====
     enum BlockType {
         WALL,
         FOOD,
@@ -16,27 +19,18 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         PACMAN
     }
 
-    BlockType type = BlockType.WALL;
-
-
-
+    // ===== INNER CLASS: Block =====
     class Block {
-        int x;
-        int y;
-        int width;
-        int height;
+        int x, y, width, height;
         Image image;
+        int startX, startY;
+        char direction = 'R'; // default: right
+        int velocityX = 0, velocityY = 0;
 
-        int startX;
-        int startY;
-        char direction = 'U'; // U D L R
-        int velocityX = 0;
-        int velocityY = 0;
-
-        // ✅ NEW FIELDS FOR POWER-UPS & GHOST STATE
+        // Power-up & state
         BlockType type;
-        boolean vulnerable = false; // for ghosts
-        long vulnerableUntil = 0;   // timestamp (in ms) when vulnerability ends
+        boolean vulnerable = false;
+        long vulnerableUntil = 0;
         boolean eaten = false;
 
         Block(Image image, int x, int y, int width, int height, BlockType type) {
@@ -50,103 +44,48 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             this.type = type;
         }
 
-        void updateDirection(char direction) {
-            char prevDirection = this.direction;
-            this.direction = direction;
+        void updateDirection(char newDirection) {
+            this.direction = newDirection;
             updateVelocity();
-            this.x += this.velocityX;
-            this.y += this.velocityY;
-            for (Block wall : walls) {
-                if (collision(this, wall)) {
-                    this.x -= this.velocityX;
-                    this.y -= this.velocityY;
-                    this.direction = prevDirection;
-                    updateVelocity();
-                }
-            }
         }
 
         void updateVelocity() {
-            int speed = tileSize / 4; // 8 px/frame
+            int speed = tileSize / 4; // 8 px/frame @ 20 FPS
             switch (direction) {
-                case 'U':
-                    velocityX = 0;
-                    velocityY = -speed;
-                    break;
-                case 'D':
-                    velocityX = 0;
-                    velocityY = speed;
-                    break;
-                case 'L':
-                    velocityX = -speed;
-                    velocityY = 0;
-                    break;
-                case 'R':
-                    velocityX = speed;
-                    velocityY = 0;
-                    break;
-                default:
-                    velocityX = 0;
-                    velocityY = 0;
+                case 'U': velocityX = 0; velocityY = -speed; break;
+                case 'D': velocityX = 0; velocityY =  speed; break;
+                case 'L': velocityX = -speed; velocityY = 0; break;
+                case 'R': velocityX =  speed; velocityY = 0; break;
+                default:  velocityX = 0; velocityY = 0;
             }
         }
-//        void updateVelocity() {
-//            if (this.direction == 'U') {
-//                this.velocityX = 0;
-//                this.velocityY = -tileSize/4;
-//            }
-//            else if (this.direction == 'D') {
-//                this.velocityX = 0;
-//                this.velocityY = tileSize/4;
-//            }
-//            else if (this.direction == 'L') {
-//                this.velocityX = -tileSize/4;
-//                this.velocityY = 0;
-//            }
-//            else if (this.direction == 'R') {
-//                this.velocityX = tileSize/4;
-//                this.velocityY = 0;
-//            }
-//        }
 
         void reset() {
-            this.x = this.startX;
-            this.y = this.startY;
+            x = startX;
+            y = startY;
             eaten = false;
+            vulnerable = false;
         }
     }
 
+    // ===== CONSTANTS & FIELDS =====
+    private static final int rowCount = 21;
+    private static final int columnCount = 19;
+    private static final int tileSize = 32;
+    private static final int boardWidth = columnCount * tileSize;
+    private static final int boardHeight = rowCount * tileSize;
 
-    private int rowCount = 21;
-    private int columnCount = 19;
-    private int tileSize = 32;
-    private int boardWidth = columnCount * tileSize;
-    private int boardHeight = rowCount * tileSize;
-
+    // Images
     private Image wallImage;
+    private Image blueGhostImage, orangeGhostImage, pinkGhostImage, redGhostImage;
+    private Image pacManUpImage, pacManDownImage, pacManLeftImage, pacManRightImage;
+    private Image powerPelletImage, powerPelletImage2;
+    private Image vulnerableGhostImage; // use blueGhostImage as fallback
 
-    //GhostImages
-    private Image blueGhostImage;
-    private Image orangeGhostImage;
-    private Image pinkGhostImage;
-    private Image redGhostImage;
-    private Image powerPelletImage;
-    private Image powerPelletImage2; // for animation
-    private Image vulnerableGhostImage; // optional: use blueGhostImage or create a new one
-
-    //PacMan Image
-    private Image pacManUpImage;
-    private Image pacManDownImage;
-    private Image pacManLeftImage;
-    private Image pacManRightImage;
-
-
-    //X = wall, O = skip, P = pac man, ' ' = food
-    //Ghosts: b = blue, o = orange, p = pink, r = red
+    // Game state
     private String[] tileMap = {
             "XXXXXXXXXXXXXXXXXXX",
             "XC       X       CX",
-            "X        X        X",
             "X XX XXX X XXX XX X",
             "X                 X",
             "X XX X XXXXX X XX X",
@@ -168,50 +107,74 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             "XXXXXXXXXXXXXXXXXXX"
     };
 
-    HashSet<Block> walls;
-    HashSet<Block> foods;
-    HashSet<Block> powerPellets;
-    HashSet<Block> ghosts;
-    Block pacman;
+    private HashSet<Block> walls;
+    private HashSet<Block> foods;
+    private HashSet<Block> powerPellets;
+    private HashSet<Block> ghosts;
+    private Block pacman;
 
-    Timer gameLoop;
-    char[] directions = {'U', 'D', 'L', 'R'}; //up down left right
-    Random random = new Random();
-    int score = 0;
-    int lives = 3;
-    boolean gameOver = false;
+    private Timer gameLoop;
+    private final char[] directions = {'U', 'D', 'L', 'R'};
+    private final Random random = new Random();
+    private int score = 0;
+    private int lives = 3;
+    private boolean gameOver = false;
 
-    PacMan() {
-        setPreferredSize(new Dimension(this.boardWidth, this.boardHeight));
+    // ===== CONSTRUCTOR =====
+    public PacMan() {
+        setPreferredSize(new Dimension(boardWidth, boardHeight));
         setBackground(Color.BLACK);
+        setFocusable(true);
+        addKeyListener(this);
 
-        //load images
-        wallImage = new ImageIcon(getClass().getResource("/images/wall.png")).getImage();
+        // Load images safely
+        wallImage = loadImage("/images/wall.png", "wall");
+        blueGhostImage = loadImage("/images/blueGhost.png", "blue ghost");
+        orangeGhostImage = loadImage("/images/orangeGhost.png", "orange ghost");
+        pinkGhostImage = loadImage("/images/pinkGhost.png", "pink ghost");
+        redGhostImage = loadImage("/images/redGhost.png", "red ghost");
 
-        blueGhostImage = new ImageIcon(getClass().getResource("/images/blueGhost.png")).getImage();
-        orangeGhostImage = new ImageIcon(getClass().getResource("/images/orangeGhost.png")).getImage();
-        pinkGhostImage = new ImageIcon(getClass().getResource("/images/pinkGhost.png")).getImage();
-        redGhostImage = new ImageIcon(getClass().getResource("/images/redGhost.png")).getImage();
+        pacManUpImage = loadImage("/images/pacmanUp.png", "pacman up");
+        pacManDownImage = loadImage("/images/pacmanDown.png", "pacman down");
+        pacManLeftImage = loadImage("/images/pacmanLeft.png", "pacman left");
+        pacManRightImage = loadImage("/images/pacmanRight.png", "pacman right");
 
-        powerPelletImage = new ImageIcon(getClass().getResource("/images/cherry.png")).getImage();
-        powerPelletImage2 = new ImageIcon(getClass().getResource("/images/cherry2.png")).getImage();
-        vulnerableGhostImage = blueGhostImage;
+        powerPelletImage = loadImage("/images/cherry.png", "cherry");
+        powerPelletImage2 = loadImage("/images/Cherry2.png", "cherry alt");
+        vulnerableGhostImage = blueGhostImage; // reuse blue
 
-        pacManUpImage = new ImageIcon(getClass().getResource("/images/pacmanUp.png")).getImage();
-        pacManDownImage = new ImageIcon(getClass().getResource("/images/pacmanDown.png")).getImage();
-        pacManLeftImage = new ImageIcon(getClass().getResource("/images/pacmanLeft.png")).getImage();
-        pacManRightImage = new ImageIcon(getClass().getResource("/images/pacmanRight.png")).getImage();
-
+        // Initialize game
         loadMap();
-        for (Block ghost : ghosts) {
-            char newDirection = directions[random.nextInt(4)];
-            ghost.updateDirection(newDirection);
-        }
-        //how long it takes to start timer, milliseconds gone between frames
-        gameLoop = new Timer(100, this); //20fps (1000/50)
+        resetPositions();
+
+        // Start game loop (20 FPS)
+        gameLoop = new Timer(50, this);
         gameLoop.start();
+
+        // Ensure focus
+        requestFocusInWindow();
     }
 
+    // ===== IMAGE LOADER WITH FALLBACK =====
+    private Image loadImage(String path, String name) {
+        URL url = getClass().getResource(path);
+        if (url == null) {
+            System.err.println("❌ Missing image: " + path + " (" + name + ")");
+            BufferedImage placeholder = new BufferedImage(tileSize, tileSize, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = placeholder.createGraphics();
+            g2d.setColor(Color.MAGENTA);
+            g2d.fillRect(0, 0, tileSize, tileSize);
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Sans", Font.BOLD, 10));
+            String label = name.length() > 6 ? name.substring(0, 6) : name;
+            g2d.drawString(label, 2, tileSize - 5);
+            g2d.dispose();
+            return placeholder;
+        }
+        return new ImageIcon(url).getImage();
+    }
+
+    // ===== MAP LOADING =====
     public void loadMap() {
         walls = new HashSet<>();
         foods = new HashSet<>();
@@ -219,18 +182,16 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         ghosts = new HashSet<>();
 
         for (int r = 0; r < rowCount; r++) {
+            String row = tileMap[r];
             for (int c = 0; c < columnCount; c++) {
-                String row = tileMap[r];
-                char tileMapChar = row.charAt(c);
-
+                char ch = row.charAt(c);
                 int x = c * tileSize;
                 int y = r * tileSize;
 
-                switch (tileMapChar) {
+                switch (ch) {
                     case 'X':
                         walls.add(new Block(wallImage, x, y, tileSize, tileSize, BlockType.WALL));
                         break;
-
                     case 'b':
                         ghosts.add(new Block(blueGhostImage, x, y, tileSize, tileSize, BlockType.GHOST));
                         break;
@@ -243,259 +204,284 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
                     case 'r':
                         ghosts.add(new Block(redGhostImage, x, y, tileSize, tileSize, BlockType.GHOST));
                         break;
-
                     case 'P':
                         pacman = new Block(pacManRightImage, x, y, tileSize, tileSize, BlockType.PACMAN);
                         break;
-
                     case ' ':
                         foods.add(new Block(null, x + 12, y + 12, 8, 8, BlockType.FOOD));
                         break;
-
-                    case 'C': // Power pellet (Cherry)
+                    case 'C':
                         powerPellets.add(new Block(powerPelletImage, x + 8, y + 8, 16, 16, BlockType.POWER_PELLET));
                         break;
-
-                    // Ignore 'O' (empty/open space)
+                    // 'O' and others: empty
                 }
-
-//                if (tileMapChar == 'X') { //block wall
-//                    Block wall = new Block(wallImage, x, y, tileSize, tileSize, BlockType.WALL);
-//                    walls.add(wall);
-//                }
-//                else if (tileMapChar == 'b') { //blue ghost
-//                    Block ghost = new Block(blueGhostImage, x, y, tileSize, tileSize, BlockType.GHOST);
-//                    ghosts.add(ghost);
-//                }
-//                else if (tileMapChar == 'o') { //orange ghost
-//                    Block ghost = new Block(orangeGhostImage, x, y, tileSize, tileSize, BlockType.GHOST);
-//                    ghosts.add(ghost);
-//                }
-//                else if (tileMapChar == 'p') { //pink ghost
-//                    Block ghost = new Block(pinkGhostImage, x, y, tileSize, tileSize, BlockType.GHOST);
-//                    ghosts.add(ghost);
-//                }
-//                else if (tileMapChar == 'r') { //red ghost
-//                    Block ghost = new Block(redGhostImage, x, y, tileSize, tileSize, BlockType.GHOST);
-//                    ghosts.add(ghost);
-//                }
-//                else if (tileMapChar == 'P') { //pacman
-//                    pacman = new Block(pacManRightImage, x, y, tileSize, tileSize, BlockType.PACMAN);
-//                }
-//                else if (tileMapChar == ' ') { //food
-//                    Block food = new Block(null, x + 14, y + 14, 4, 4, BlockType.FOOD);
-//                    foods.add(food);
-//                }
-//                else if (tileMapChar == 'C') { // Power pellet (Cherry)
-//                    Block pellet = new Block(powerPelletImage, x + 8, y + 8, 16, 16, BlockType.POWER_PELLET); // larger
-//                    foods.add(pellet); // reuse foods set, or create powerPellets set (see note below)
-//                }
             }
         }
     }
 
-    public void paintComponent(Graphics g) {
+    // ===== RESET POSITIONS =====
+    public void resetPositions() {
+        if (pacman != null) {
+            pacman.reset();
+            pacman.updateVelocity(); // critical!
+        }
+        for (Block ghost : ghosts) {
+            ghost.reset();
+            ghost.updateDirection(directions[random.nextInt(4)]);
+        }
+        score = 0;
+        lives = 3;
+        gameOver = false;
+    }
+
+    // ===== GAME LOOP: actionPerformed =====
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (!gameOver) {
+            move();
+        }
+        repaint();
+    }
+
+    // ===== MOVEMENT LOGIC =====
+    public void move() {
+        long now = System.currentTimeMillis();
+
+        // Decay ghost vulnerability
+        for (Block ghost : ghosts) {
+            if (ghost.vulnerable && now >= ghost.vulnerableUntil) {
+                ghost.vulnerable = false;
+                ghost.eaten = false;
+            }
+        }
+
+        // === Move Pac-Man ===
+        int newX = pacman.x + pacman.velocityX;
+        int newY = pacman.y + pacman.velocityY;
+
+        // ✅ Wrap-around tunnel (left ↔ right)
+        if (newX + pacman.width < 0) {
+            newX = boardWidth;
+        } else if (newX > boardWidth) {
+            newX = -pacman.width;
+        }
+
+        // Wall collision check
+        boolean canMove = true;
+        for (Block wall : walls) {
+            Block temp = new Block(null, newX, newY, pacman.width, pacman.height, BlockType.WALL);
+            if (collision(temp, wall)) {
+                canMove = false;
+                break;
+            }
+        }
+
+        if (canMove) {
+            pacman.x = newX;
+            pacman.y = newY;
+        }
+
+        // === Move ghosts ===
+        for (Block ghost : ghosts) {
+            if (ghost.eaten) {
+                // Optional: return to center faster
+                continue;
+            }
+
+            ghost.x += ghost.velocityX;
+            ghost.y += ghost.velocityY;
+
+            // Wall/edge collision
+            boolean collided = false;
+            for (Block wall : walls) {
+                if (collision(ghost, wall) || ghost.x < 0 || ghost.x + ghost.width > boardWidth) {
+                    ghost.x -= ghost.velocityX;
+                    ghost.y -= ghost.velocityY;
+                    ghost.updateDirection(directions[random.nextInt(4)]);
+                    collided = true;
+                    break;
+                }
+            }
+
+            // Random turn occasionally (smarter AI later)
+            if (!collided && random.nextInt(100) < 3) {
+                ghost.updateDirection(directions[random.nextInt(4)]);
+            }
+        }
+
+        // === Pac-Man vs Ghost collision ===
+        for (Block ghost : ghosts) {
+            if (collision(pacman, ghost)) {
+                if (ghost.vulnerable && !ghost.eaten) {
+                    // Eat ghost!
+                    ghost.eaten = true;
+                    score += 200;
+                    ghost.reset();
+                } else if (!ghost.eaten) {
+                    // Lose life
+                    lives--;
+                    if (lives <= 0) {
+                        gameOver = true;
+                    } else {
+                        resetPositions();
+                    }
+                }
+            }
+        }
+
+        // === Food collision ===
+        Block foodHit = null;
+        for (Block food : foods) {
+            if (collision(pacman, food)) {
+                foodHit = food;
+                score += 10;
+                break;
+            }
+        }
+        foods.remove(foodHit);
+
+        // === Power pellet collision ===
+        Block pelletHit = null;
+        for (Block pellet : powerPellets) {
+            if (collision(pacman, pellet)) {
+                pelletHit = pellet;
+                score += 50;
+                // Activate vulnerability for 10 seconds
+                for (Block g : ghosts) {
+                    g.vulnerable = true;
+                    g.vulnerableUntil = now + 10_000;
+                    g.eaten = false;
+                }
+                break;
+            }
+        }
+        powerPellets.remove(pelletHit);
+
+        // Win condition
+        if (foods.isEmpty() && powerPellets.isEmpty()) {
+            loadMap();
+            resetPositions();
+        }
+    }
+
+    // ===== COLLISION DETECTION =====
+    public boolean collision(Block a, Block b) {
+        return a.x < b.x + b.width &&
+                a.x + a.width > b.x &&
+                a.y < b.y + b.height &&
+                a.y + a.height > b.y;
+    }
+
+    // ===== RENDERING =====
+    @Override
+    protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         draw(g);
     }
 
     public void draw(Graphics g) {
-
-        for (Block ghost : ghosts) {
-            Image img = ghost.image;
-            if (ghost.vulnerable) {
-                // Optional: flicker near end
-                long now = System.currentTimeMillis();
-                if (ghost.vulnerableUntil - now < 2000 && (now / 250) % 2 == 0) {
-                    img = null; // blink
-                } else {
-                    img = vulnerableGhostImage; // e.g., blue
-                }
-            }
-            if (img != null) {
-                g.drawImage(img, ghost.x, ghost.y, ghost.width, ghost.height, null);
-            }
-        }
-
-        g.drawImage(pacman.image, pacman.x, pacman.y, pacman.width, pacman.height, null);
-
-        for (Block ghost : ghosts) {
-            g.drawImage(ghost.image, ghost.x, ghost.y, ghost.width, ghost.height, null);
-        }
-
+        // Draw walls
         for (Block wall : walls) {
             g.drawImage(wall.image, wall.x, wall.y, wall.width, wall.height, null);
         }
 
-        // Draw regular food
+        // Draw Pac-Man
+        if (pacman != null) {
+            g.drawImage(pacman.image, pacman.x, pacman.y, pacman.width, pacman.height, null);
+        }
+
+        // Draw ghosts
+        long now = System.currentTimeMillis();
+        for (Block ghost : ghosts) {
+            if (ghost.eaten) continue;
+
+            Image img = ghost.image;
+            if (ghost.vulnerable) {
+                if (ghost.vulnerableUntil - now < 2000 && (now / 250) % 2 == 0) {
+                    img = null; // blink
+                } else {
+                    img = vulnerableGhostImage;
+                }
+            }
+
+            if (img != null) {
+                g.drawImage(img, ghost.x, ghost.y, ghost.width, ghost.height, null);
+            } else {
+                // Draw white outline when blinking
+                g.setColor(Color.WHITE);
+                g.drawRect(ghost.x, ghost.y, ghost.width - 1, ghost.height - 1);
+            }
+        }
+
+        // Draw food (dots)
         g.setColor(Color.WHITE);
         for (Block food : foods) {
             g.fillOval(food.x, food.y, food.width, food.height);
         }
 
         // Draw power pellets (animated)
-        long time = System.currentTimeMillis();
         for (Block pellet : powerPellets) {
-            // Alternate every 500ms
-            Image img = (time / 500) % 2 == 0 ? powerPelletImage : powerPelletImage2;
+            Image img = ((now / 500) % 2 == 0) ? powerPelletImage : powerPelletImage2;
             g.drawImage(img, pellet.x, pellet.y, pellet.width, pellet.height, null);
         }
 
-        //score
-        g.setFont(new Font("Arial", Font.PLAIN, 18));
+        // UI: Score & Lives
+        g.setFont(new Font("Arial", Font.BOLD, 18));
+        g.setColor(Color.YELLOW);
         if (gameOver) {
-            g.drawString("Game Over: " + String.valueOf(score), tileSize/2, tileSize/2);
-        }
-        else {
-            g.drawString("x" + String.valueOf(lives) + " Score: " + String.valueOf(score), tileSize/2, tileSize/2);
+            g.drawString("GAME OVER! Score: " + score, tileSize, tileSize);
+            g.drawString("Press any key to restart", tileSize, tileSize * 2);
+        } else {
+            g.drawString("Lives: " + lives + "   Score: " + score, tileSize, tileSize);
         }
     }
 
-    public void move() {
-        pacman.x += pacman.velocityX;
-        pacman.y += pacman.velocityY;
-
-        //check wall collisions
-        for (Block wall : walls) {
-            if (collision(pacman, wall)) {
-                pacman.x -= pacman.velocityX;
-                pacman.y -= pacman.velocityY;
-                break;
-            }
-        }
-
-        //check ghost collisions
-        for (Block ghost : ghosts) {
-            if (collision(ghost, pacman)) {
-                lives -= 1;
-                if (lives == 0) {
-                    gameOver = true;
-                    return;
-                }
-                resetPositions();
-            }
-
-            if (ghost.y == tileSize*9 && ghost.direction != 'U' && ghost.direction != 'D') {
-                ghost.updateDirection('U');
-            }
-            ghost.x += ghost.velocityX;
-            ghost.y += ghost.velocityY;
-            for (Block wall : walls) {
-                if (collision(ghost, wall) || ghost.x <= 0 || ghost.x + ghost.width >= boardWidth) {
-                    ghost.x -= ghost.velocityX;
-                    ghost.y -= ghost.velocityY;
-                    char newDirection = directions[random.nextInt(4)];
-                    ghost.updateDirection(newDirection);
-                }
-            }
-        }
-
-        //check food collision
-        Block foodEaten = null;
-        for (Block food : foods) {
-            if (collision(pacman, food)) {
-                foodEaten = food;
-                score += 10;
-                break;
-            }
-        }
-        foods.remove(foodEaten);
-
-        // Check power pellet collision
-        Block pelletEaten = null;
-        for (Block pellet : powerPellets) {
-            if (collision(pacman, pellet)) {
-                pelletEaten = pellet;
-                score += 50;
-
-                // Activate vulnerability for 10 seconds (10,000 ms)
-                long now = System.currentTimeMillis();
-                for (Block ghost : ghosts) {
-                    ghost.vulnerable = true;
-                    ghost.vulnerableUntil = now + 10_000;
-                    ghost.eaten = false;
-                }
-                break;
-            }
-        }
-        powerPellets.remove(pelletEaten);
-
-        if (foods.isEmpty()) {
+    // ===== KEY INPUT =====
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if (gameOver) {
+            // Restart
             loadMap();
             resetPositions();
+            gameLoop.start();
+            return;
         }
-    }
 
-    public boolean collision(Block a, Block b) {
-        return  a.x < b.x + b.width &&
-                a.x + a.width > b.x &&
-                a.y < b.y + b.height &&
-                a.y + a.height > b.y;
-    }
-
-    public void resetPositions() {
-        if (pacman != null) pacman.reset();
-
-        for (Block ghost : ghosts) {
-            ghost.reset();
-            ghost.vulnerable = false;
-            ghost.eaten = false;
-            char newDirection = directions[random.nextInt(4)];
-            ghost.updateDirection(newDirection);
+        char newDir = pacman.direction;
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_UP:    newDir = 'U'; break;
+            case KeyEvent.VK_DOWN:  newDir = 'D'; break;
+            case KeyEvent.VK_LEFT:  newDir = 'L'; break;
+            case KeyEvent.VK_RIGHT: newDir = 'R'; break;
+            default: return;
         }
-    }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        move();
-        repaint();
-        if (gameOver) {
-            gameLoop.stop();
+        if (newDir != pacman.direction) {
+            pacman.updateDirection(newDir);
+            // Update image
+            switch (pacman.direction) {
+                case 'U': pacman.image = pacManUpImage; break;
+                case 'D': pacman.image = pacManDownImage; break;
+                case 'L': pacman.image = pacManLeftImage; break;
+                case 'R': pacman.image = pacManRightImage; break;
+            }
         }
     }
 
     @Override
     public void keyTyped(KeyEvent e) {}
-
     @Override
-    public void keyPressed(KeyEvent e) {}
+    public void keyReleased(KeyEvent e) {}
 
-    @Override
-    public void keyReleased(KeyEvent e) {
-        if (gameOver) {
-            loadMap();
-            resetPositions();
-            lives = 3;
-            score = 0;
-            gameOver = false;
-            gameLoop.start();
-        }
-        // System.out.println("KeyEvent: " + e.getKeyCode());
-        if (e.getKeyCode() == KeyEvent.VK_UP) {
-            pacman.updateDirection('U');
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-            pacman.updateDirection('D');
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            pacman.updateDirection('L');
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            pacman.updateDirection('R');
-        }
-
-        if (pacman.direction == 'U') {
-            pacman.image = pacManUpImage;
-        }
-        else if (pacman.direction == 'D') {
-            pacman.image = pacManDownImage;
-        }
-        else if (pacman.direction == 'L') {
-            pacman.image = pacManLeftImage;
-        }
-        else if (pacman.direction == 'R') {
-            pacman.image = pacManRightImage;
-        }
+    // ===== MAIN METHOD (for testing) =====
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Pac-Man");
+        PacMan game = new PacMan();
+        frame.add(game);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setResizable(false);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
     }
-
 }
