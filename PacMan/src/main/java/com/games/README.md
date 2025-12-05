@@ -118,7 +118,6 @@ All features verified:
 - Resource placeholders use Magenta+White for easy debugging
 - ❤️ Built with passion for classic gaming and clean Java code
 
-
 ## 📜 License
 ```bash
 MIT License
