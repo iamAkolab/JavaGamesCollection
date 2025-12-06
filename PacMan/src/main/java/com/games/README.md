@@ -103,6 +103,7 @@ All features verified:
 - Ghosts to flee to center when eaten
 - Score multiplier for consecutive ghost eats (200 → 400 → 800)
 
+
 | FEATURE                                                 | STATUS     |
 |---------------------------------------------------------|------------|
 | 🎵 Sound effects (chomp, siren, death)                  | Planned    |
