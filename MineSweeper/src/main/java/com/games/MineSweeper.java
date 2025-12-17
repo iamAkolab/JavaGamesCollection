@@ -37,6 +37,7 @@ public class MineSweeper {
     boolean gameOver = false;
 
     MineSweeper() {
+
         // frame.setVisible(true);
         frame.setSize(boardWidth, boardHeight);
         frame.setLocationRelativeTo(null);
