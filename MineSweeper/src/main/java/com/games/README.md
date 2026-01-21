@@ -6,3 +6,4 @@ getText() method to get the input, check if it's a number, and use that as the n
 feature would be to create another JButton for "restart game". By clicking this button, your program should reset 
 the game by setting text to "" and enabled to true for every tile. After that, your program should call setMines() 
 again. You can also combine this feature with the input for the number of mines.
+
