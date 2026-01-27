@@ -1,5 +1,4 @@
 # Modifications Pending
-
 You can continue working on this project if you like. One feature you can add is create an input to let players 
 input the number of mines present in the game. To do this, you will need a JTextField. Then you can use the 
 getText() method to get the input, check if it's a number, and use that as the number of mines. Another useful 
