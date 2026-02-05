@@ -7,6 +7,7 @@ import java.util.Random;
 import javax.swing.*;
 
 public class OldPacMan extends JPanel implements ActionListener, KeyListener {
+
     class Block {
         int x;
         int y;
