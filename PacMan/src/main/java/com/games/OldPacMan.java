@@ -15,6 +15,7 @@ public class OldPacMan extends JPanel implements ActionListener, KeyListener {
         int height;
         Image image;
 
+
         int startX;
         int startY;
         char direction = 'U'; // U D L R
