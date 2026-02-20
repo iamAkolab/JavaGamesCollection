@@ -107,6 +107,8 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             "XXXXXXXXXXXXXXXXXXX"
     };
 
+    //game objects
+
     private HashSet<Block> walls;
     private HashSet<Block> foods;
     private HashSet<Block> powerPellets;
