@@ -6,5 +6,4 @@ public class Main {
         MineSweeper minesweeper = new MineSweeper();
 
     }
-
 }
