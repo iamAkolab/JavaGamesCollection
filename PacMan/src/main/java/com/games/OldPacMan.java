@@ -152,6 +152,7 @@ public class OldPacMan extends JPanel implements ActionListener, KeyListener {
             char newDirection = directions[random.nextInt(4)];
             ghost.updateDirection(newDirection);
         }
+
         //how long it takes to start timer, milliseconds gone between frames
         gameLoop = new Timer(50, this); //20fps (1000/50)
         gameLoop.start();
