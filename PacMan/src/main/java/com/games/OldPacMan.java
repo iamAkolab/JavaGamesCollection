@@ -38,6 +38,7 @@ public class OldPacMan extends JPanel implements ActionListener, KeyListener {
             updateVelocity();
             this.x += this.velocityX;
             this.y += this.velocityY;
+
             for (Block wall : walls) {
                 if (collision(this, wall)) {
                     this.x -= this.velocityX;
